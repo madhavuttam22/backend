@@ -30,4 +30,5 @@ from .models import FirebaseUser
 class FirebaseUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = FirebaseUser
-        fields = '__all__'
+        fields = ['first_name', 'last_name', 'email', 'phone', 'address', 'avatar']
+

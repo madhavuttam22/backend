@@ -36,7 +36,7 @@
 #         return Response({'detail': str(e)}, status=400)
 
 
-
+# users/views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -49,10 +49,20 @@ class FirebaseUserUpdateView(APIView):
     def put(self, request):
         user_email = request.user.email
         data = request.data
-        user_obj, created = FirebaseUser.objects.get_or_create(email=user_email)
+        try:
+            user_obj, created = FirebaseUser.objects.get_or_create(email=user_email)
+        except FirebaseUser.MultipleObjectsReturned:
+            return Response({'detail': 'Multiple users found with same email'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = FirebaseUserSerializer(user_obj, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({'message': 'Profile updated successfully'}, status=status.HTTP_200_OK)
+            return Response({
+                "name": f"{serializer.data.get('first_name')} {serializer.data.get('last_name')}",
+                "email": serializer.data.get("email"),
+                "phone": serializer.data.get("phone"),
+                "address": serializer.data.get("address"),
+                "avatar": serializer.data.get("avatar"),
+            }, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
