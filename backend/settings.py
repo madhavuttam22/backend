@@ -100,6 +100,10 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',  # for FormData
         'rest_framework.parsers.FormParser',
     ],
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+        'users.firebase_authentication.FirebaseAuthentication',
+    ],
+
 }
 
 
