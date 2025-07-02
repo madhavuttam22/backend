@@ -37,42 +37,42 @@
 
 
 # users/views.py
-# views.py
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from firebase_admin import auth as firebase_auth
 from .models import FirebaseUser
 from .serializers import FirebaseUserSerializer
-from rest_framework import permissions
+
 class FirebaseProfileUpdateView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    permission_classes = [permissions.AllowAny]  # or IsAuthenticated if token validated
+    permission_classes = [permissions.AllowAny]  # adjust as needed
 
     def put(self, request):
-        # ✅ Step 1: Extract Firebase token from Authorization header
-        auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            return Response({"detail": "Authorization header missing"}, status=403)
-        
-        id_token = auth_header.split("Bearer ")[1]
-
         try:
-            # ✅ Step 2: Verify token
+            auth_header = request.headers.get("Authorization", "")
+            if not auth_header.startswith("Bearer "):
+                return Response({"detail": "Invalid authorization header"}, status=401)
+
+            id_token = auth_header.split(" ")[1]
             decoded_token = firebase_auth.verify_id_token(id_token)
-            uid = decoded_token.get("uid")
-            email = decoded_token.get("email")
+            uid = decoded_token["uid"]
+            email = decoded_token.get("email", "")
+
+            if not email:
+                return Response({"detail": "Email not found in token"}, status=400)
+
+            user, _ = FirebaseUser.objects.get_or_create(uid=uid, defaults={"email": email})
+            serializer = FirebaseUserSerializer(user, data=request.data, partial=True)
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=200)
+            else:
+                return Response({"errors": serializer.errors}, status=400)
+
+        except firebase_auth.InvalidIdTokenError:
+            return Response({"detail": "Invalid ID token"}, status=403)
         except Exception as e:
-            return Response({"detail": "Invalid or expired token"}, status=403)
-
-        # ✅ Step 3: Get or create user using email and uid
-        user, _ = FirebaseUser.objects.get_or_create(uid=uid, defaults={"email": email})
-
-        # ✅ Step 4: Update profile with form data (partial=True allows partial update)
-        serializer = FirebaseUserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=200)  # ✅ Returns JSON
-
-        return Response(serializer.errors, status=400)
+            return Response({"detail": str(e)}, status=500)
