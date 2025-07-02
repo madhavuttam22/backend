@@ -88,13 +88,19 @@ from .serializers import FirebaseUserSerializer
 from utils.firebase_authentication import verify_firebase_token
 
 class FirebaseProfileMeView(APIView):
-    permission_classes = [AllowAny]  # or IsAuthenticated if you're using token auth
+    permission_classes = [AllowAny]  # Use AllowAny if you're using token manually
 
     def get(self, request):
         token = request.META.get("HTTP_AUTHORIZATION", "").split("Bearer ")[-1]
-        decoded = verify_firebase_token(token)
-        email = decoded.get("email")
-        uid = decoded.get("user_id")
+        if not token:
+            return Response({"detail": "Authorization header missing"}, status=400)
+
+        try:
+            decoded = verify_firebase_token(token)
+            email = decoded.get("email")
+            uid = decoded.get("user_id")
+        except Exception as e:
+            return Response({"detail": "Invalid Firebase token"}, status=401)
 
         user = FirebaseUser.objects.filter(email=email, uid=uid).first()
         if not user:

@@ -29,8 +29,11 @@ from rest_framework import serializers
 from .models import FirebaseUser
 
 class FirebaseUserSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
     class Meta:
         model = FirebaseUser
-        fields = ['first_name','last_name','email','phone','address','avatar']
+        fields = ['id', 'uid', 'email', 'name', 'avatar', 'phone', 'address']
 
-
+    def get_name(self, obj):
+        return f"{obj.first_name or ''} {obj.last_name or ''}".strip()
