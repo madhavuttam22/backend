@@ -76,3 +76,29 @@ class FirebaseProfileUpdateView(APIView):
             return Response({"detail": "Invalid ID token"}, status=403)
         except Exception as e:
             return Response({"detail": str(e)}, status=500)
+
+# users/views.py
+# users/views.py
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from .models import FirebaseUser
+from .serializers import FirebaseUserSerializer
+from utils.firebase_authentication import verify_firebase_token
+
+class FirebaseProfileMeView(APIView):
+    permission_classes = [AllowAny]  # or IsAuthenticated if you're using token auth
+
+    def get(self, request):
+        token = request.META.get("HTTP_AUTHORIZATION", "").split("Bearer ")[-1]
+        decoded = verify_firebase_token(token)
+        email = decoded.get("email")
+        uid = decoded.get("user_id")
+
+        user = FirebaseUser.objects.filter(email=email, uid=uid).first()
+        if not user:
+            return Response({"detail": "User not found"}, status=404)
+
+        serializer = FirebaseUserSerializer(user)
+        return Response(serializer.data)
