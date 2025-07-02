@@ -37,39 +37,37 @@
 
 
 # users/views.py
-# users/views.py
+# views.py
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-from rest_framework import status, permissions, parsers
+from rest_framework import status
 from firebase_admin import auth as firebase_auth
 from .models import FirebaseUser
 from .serializers import FirebaseUserSerializer
 
 class FirebaseProfileUpdateView(APIView):
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
-    permission_classes = [permissions.AllowAny]  # Or custom Firebase permission
+    parser_classes = [MultiPartParser, FormParser]
 
     def put(self, request):
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith("Bearer "):
-            return Response({"detail": "Authentication credentials were not provided."}, status=401)
-
-        id_token = auth_header.split("Bearer ")[-1]
-
+        auth_header = request.headers.get('Authorization','')
+        if not auth_header.startswith("Bearer "):
+            return Response({"detail":"Auth required"}, status=401)
+        token = auth_header.split('Bearer ')[1]
         try:
-            decoded_token = firebase_auth.verify_id_token(id_token)
-            email = decoded_token.get("email")
-            uid = decoded_token.get("uid")
+            dec = firebase_auth.verify_id_token(token)
+            uid = dec.get('uid')
+            email = dec.get('email')
         except Exception as e:
             return Response({"detail": str(e)}, status=401)
 
-        try:
-            user, created = FirebaseUser.objects.get_or_create(email=email, uid=uid)
-        except Exception as e:
-            return Response({"detail": f"DB Error: {str(e)}"}, status=500)
-
+        user, _ = FirebaseUser.objects.get_or_create(uid=uid, email=email)
         serializer = FirebaseUserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=200)
+            resp = serializer.data
+            if user.avatar:
+                resp['avatar_url'] = request.build_absolute_uri(user.avatar.url)
+            return Response(resp)
         return Response(serializer.errors, status=400)
+
