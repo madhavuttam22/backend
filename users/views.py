@@ -36,6 +36,7 @@
 #         return Response({'detail': str(e)}, status=400)
 
 
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -49,7 +50,7 @@ class FirebaseUserUpdateView(APIView):
         user_email = request.user.email
         data = request.data
         user_obj, created = FirebaseUser.objects.get_or_create(email=user_email)
-        
+
         serializer = FirebaseUserSerializer(user_obj, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
