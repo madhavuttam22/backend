@@ -77,7 +77,8 @@ from .models import FirebaseUser
 from .serializers import FirebaseUserSerializer
 
 class FirebaseProfileUpdateView(APIView):
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+    parser_classes = [parsers.JSONParser]
+
     permission_classes = [permissions.AllowAny]  # Or custom Firebase permission
 
     def put(self, request):
