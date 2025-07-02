@@ -53,8 +53,8 @@ SESSION_COOKIE_HTTPONLY = True
 CORS_ALLOWED_ORIGINS = [
     # "http://localhost:3000",
     'https://ecco-font.onrender.com/'
-    "http://localhost:5173",  # React's default port
-    "http://127.0.0.1:5173",
+    # "http://localhost:5173",  # React's default port
+    # "http://127.0.0.1:5173",
     "https://ecco-back-4j3f.onrender.com"
 
 ]
