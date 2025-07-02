@@ -85,8 +85,6 @@ def add_to_cart(request, product_id):
         size_id = data.get('size_id')
         color_id = data.get('color_id')
         quantity = int(data.get('quantity', 1))
-        if color_id:
-            color = Color.objects.get(id=color_id)
 
         if not size_id:
             return JsonResponse({'status': 'error', 'message': 'Size is required'}, status=400)
@@ -94,6 +92,12 @@ def add_to_cart(request, product_id):
         product = Products.objects.get(id=product_id)
         size = Size.objects.get(id=size_id)
 
+        # ✅ Only define color if color_id is provided
+        color = None
+        if color_id:
+            color = Color.objects.get(id=color_id)
+
+        # ✅ Use color in get_or_create
         item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
@@ -117,10 +121,11 @@ def add_to_cart(request, product_id):
         return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
     except Size.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Size not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     except Color.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Color not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
 
 
 @csrf_exempt
