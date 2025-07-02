@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from products.models import Products,Size  # Your Products model
+from products.models import *  # Your Products model
 
 class Cart(models.Model):
         firebase_uid = models.CharField(max_length=128, unique=True)
@@ -21,6 +21,7 @@ class CartItem(models.Model):
         cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
         product = models.ForeignKey(Products, on_delete=models.CASCADE)
         size = models.ForeignKey(Size, on_delete=models.CASCADE)
+        color = models.ForeignKey(Color, on_delete=models.CASCADE, null=True, blank=True)
         quantity = models.PositiveIntegerField(default=1)
         price = models.DecimalField(max_digits=10, decimal_places=2)
         created_at = models.DateTimeField(auto_now_add=True)
@@ -39,4 +40,4 @@ class CartItem(models.Model):
         username.short_description = 'User UID'
 
         class Meta:
-            unique_together = ('cart', 'product', 'size')
+            unique_together = ('cart', 'product', 'size', 'color')

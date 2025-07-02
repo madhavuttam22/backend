@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 import json
 from .models import Cart, CartItem
-from products.models import Products, Size
+from products.models import *
 from firebase.firebase_auth import firebase_login_required
 from django.http import JsonResponse
 from firebase.firebase_auth import firebase_login_required
@@ -38,7 +38,8 @@ def cart_api(request):
             color_name = None
 
             try:
-                product_color = item.product.colors.first()
+                product_color = ProductColor.objects.filter(product=item.product, color=item.color).first()
+
                 if product_color:
                     color_name = product_color.color.name if hasattr(product_color.color, 'name') else None
                     first_image = product_color.images.first()
@@ -81,7 +82,10 @@ def add_to_cart(request, product_id):
         cart = get_or_create_cart(request)
         data = json.loads(request.body)
         size_id = data.get('size_id')
+        color_id = data.get('color_id')
         quantity = int(data.get('quantity', 1))
+        if color_id:
+            color = Color.objects.get(id=color_id)
 
         if not size_id:
             return JsonResponse({'status': 'error', 'message': 'Size is required'}, status=400)
@@ -93,6 +97,7 @@ def add_to_cart(request, product_id):
             cart=cart,
             product=product,
             size=size,
+            color=color,
             defaults={'quantity': quantity, 'price': product.currentprice}
         )
 
@@ -113,6 +118,9 @@ def add_to_cart(request, product_id):
         return JsonResponse({'status': 'error', 'message': 'Size not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    except Color.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Color not found'}, status=404)
+
 
 
 @csrf_exempt
