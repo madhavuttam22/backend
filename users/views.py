@@ -48,11 +48,28 @@ from .serializers import FirebaseUserSerializer
 from rest_framework import permissions
 class FirebaseProfileUpdateView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    permission_classes = [permissions.AllowAny]  # adjust as needed
+    permission_classes = [permissions.AllowAny]  # or IsAuthenticated if token validated
 
     def put(self, request):
-        # token validation...
-        user, _ = FirebaseUser.objects.get_or_create(email=email, uid=uid)
+        # ✅ Step 1: Extract Firebase token from Authorization header
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return Response({"detail": "Authorization header missing"}, status=403)
+        
+        id_token = auth_header.split("Bearer ")[1]
+
+        try:
+            # ✅ Step 2: Verify token
+            decoded_token = firebase_auth.verify_id_token(id_token)
+            uid = decoded_token.get("uid")
+            email = decoded_token.get("email")
+        except Exception as e:
+            return Response({"detail": "Invalid or expired token"}, status=403)
+
+        # ✅ Step 3: Get or create user using email and uid
+        user, _ = FirebaseUser.objects.get_or_create(uid=uid, defaults={"email": email})
+
+        # ✅ Step 4: Update profile with form data (partial=True allows partial update)
         serializer = FirebaseUserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
