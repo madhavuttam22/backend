@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'corsheaders',  # for handling CORS
     'products',
     'cart',
+    'users'
 ]
 
 MIDDLEWARE = [
