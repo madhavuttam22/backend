@@ -52,7 +52,7 @@ CSRF_COOKIE_HTTPONLY = False  # Required for JavaScript to access CSRF token
 SESSION_COOKIE_HTTPONLY = True
 CORS_ALLOWED_ORIGINS = [
     # "http://localhost:3000",
-    'https://ecco-font.onrender.com'
+    'https://ecco-font.onrender.com',
     # "http://localhost:5173",  # React's default port
     # "http://127.0.0.1:5173",
     "https://ecco-back-4j3f.onrender.com"
@@ -60,8 +60,8 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
-    'https://ecco-font.onrender.com'
-    'https://ecco-back-4j3f.onrender.com'
+    'https://ecco-font.onrender.com',
+    'https://ecco-back-4j3f.onrender.com',
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
