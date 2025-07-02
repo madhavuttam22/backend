@@ -112,9 +112,10 @@ REST_FRAMEWORK = {
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 import dj_database_url
 
+
 DATABASES = {
     'default': dj_database_url.config(
-        default="postgresql://ecco_db_88gq_user:uholdZpWT1rGhwRtlQ4ApXlJ2ycNLezc@dpg-d1ij0o6r433s73anjuag-a.oregon-postgres.render.com/ecco_db_88gq",
+        default="postgresql://ecco_db_ftp2_user:4Y1qrkrMZo6qyha4wCiOonHrMApI5vki@dpg-d1io74euk2gs739np65g-a.oregon-postgres.render.com/ecco_db_ftp2",
         conn_max_age=600,
         ssl_require=True
     )
