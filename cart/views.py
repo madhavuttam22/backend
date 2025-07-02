@@ -122,7 +122,6 @@ def add_to_cart(request, product_id):
         return JsonResponse({'status': 'error', 'message': 'Color not found'}, status=404)
 
 
-
 @csrf_exempt
 @firebase_login_required
 @require_POST
@@ -132,14 +131,19 @@ def update_cart_item(request, product_id):
         data = json.loads(request.body)
         quantity = int(data.get('quantity', 1))
         size_id = data.get('size_id')
+        color_id = data.get('color_id')
+
+        if not size_id or not color_id:
+            return JsonResponse({'status': 'error', 'message': 'Size and color are required'}, status=400)
 
         product = Products.objects.get(id=product_id)
         size = Size.objects.get(id=size_id)
+        color = Color.objects.get(id=color_id)
 
         if quantity < 1:
-            CartItem.objects.filter(cart=cart, product=product, size=size).delete()
+            CartItem.objects.filter(cart=cart, product=product, size=size, color=color).delete()
         else:
-            item = CartItem.objects.get(cart=cart, product=product, size=size)
+            item = CartItem.objects.get(cart=cart, product=product, size=size, color=color)
             item.quantity = quantity
             item.save()
 
@@ -156,6 +160,8 @@ def update_cart_item(request, product_id):
             'item_count': cart.item_count
         })
 
+    except CartItem.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Cart item not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
@@ -168,11 +174,16 @@ def remove_cart_item(request, product_id):
         cart = get_or_create_cart(request)
         data = json.loads(request.body)
         size_id = data.get('size_id')
+        color_id = data.get('color_id')
+
+        if not size_id or not color_id:
+            return JsonResponse({'status': 'error', 'message': 'Size and color are required'}, status=400)
 
         product = Products.objects.get(id=product_id)
         size = Size.objects.get(id=size_id)
+        color = Color.objects.get(id=color_id)
 
-        CartItem.objects.filter(cart=cart, product=product, size=size).delete()
+        CartItem.objects.filter(cart=cart, product=product, size=size, color=color).delete()
 
         return JsonResponse({
             'status': 'success',
@@ -185,8 +196,11 @@ def remove_cart_item(request, product_id):
         return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
     except Size.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Size not found'}, status=404)
+    except Color.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Color not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
 
 @firebase_login_required
 def my_secure_view(request):
