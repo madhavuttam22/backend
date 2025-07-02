@@ -73,5 +73,6 @@ class FirebaseProfileUpdateView(APIView):
         serializer = FirebaseUserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=200)  # ✅ Returns JSON
+
         return Response(serializer.errors, status=400)
