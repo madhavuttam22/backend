@@ -57,7 +57,8 @@ def cart_api(request):
                 'size_id': item.size.id,
                 'size_name': item.size.name,
                 'image': image_url,
-                'color': color_name
+                'color': color_name,
+                'color_id': item.color.id if item.color else None,  # ✅ Add this
             })
 
         return JsonResponse({
