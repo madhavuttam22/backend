@@ -22,3 +22,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
         profile.save()
 
         return instance
+
+# users/serializers.py
+from rest_framework import serializers
+from .models import FirebaseUser
+
+class FirebaseUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FirebaseUser
+        fields = '__all__'
