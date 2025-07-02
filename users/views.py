@@ -69,16 +69,16 @@ from .serializers import FirebaseUserSerializer
 
 
 # users/views.py
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status, permissions, parsers
 from firebase_admin import auth as firebase_auth
 from .models import FirebaseUser
 from .serializers import FirebaseUserSerializer
 
 class FirebaseProfileUpdateView(APIView):
-    permission_classes = [permissions.AllowAny]  # Because Firebase token is checked manually
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+    permission_classes = [permissions.AllowAny]  # Or custom Firebase permission
 
     def put(self, request):
         auth_header = request.headers.get('Authorization')
