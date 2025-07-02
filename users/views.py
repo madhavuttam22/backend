@@ -34,30 +34,8 @@
 
 #     except Exception as e:
 #         return Response({'detail': str(e)}, status=400)
-# # users/views.py
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework import status, permissions
-# from .models import FirebaseUser
-# from .serializers import FirebaseUserSerializer
-
-# @api_view(['PUT'])
-# class FirebaseUserUpdateView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-
-#     def post(self, request):
-#         user_email = request.user.email
-#         data = request.data
-#         user_obj, created = FirebaseUser.objects.get_or_create(email=user_email)
-        
-#         serializer = FirebaseUserSerializer(user_obj, data=data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response({'message': 'Profile updated successfully'}, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# users/views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -68,11 +46,12 @@ class FirebaseUserUpdateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def put(self, request):
-        user = request.user  # FirebaseUser from custom auth
-        serializer = FirebaseUserSerializer(user, data=request.data, partial=True)
+        user_email = request.user.email
+        data = request.data
+        user_obj, created = FirebaseUser.objects.get_or_create(email=user_email)
         
+        serializer = FirebaseUserSerializer(user_obj, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({'message': 'Profile updated successfully'}, status=status.HTTP_200_OK)
-        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
