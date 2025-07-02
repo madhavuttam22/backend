@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.text import slugify
 
 class Size(models.Model):
     name = models.CharField(max_length=50)
@@ -10,6 +11,11 @@ class Size(models.Model):
 class Category(models.Model):
     category = models.CharField(max_length=250)
     slug = models.SlugField(unique=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.category)
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return self.category
@@ -31,7 +37,10 @@ class Products(models.Model):
     is_top_product = models.BooleanField(default=False)
     is_best_seller = models.BooleanField(default=False)
     sizes = models.ManyToManyField(Size, through='ProductSize')
-    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
     def __str__(self):
         return self.name
 

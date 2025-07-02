@@ -19,8 +19,8 @@ class ProductColorImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image_url', 'is_default', 'order']
     
     def get_image_url(self, obj):
-        request = self.context.get('request')
         if obj.image:
+            request = self.context.get('request')
             return request.build_absolute_uri(obj.image.url) if request else obj.image.url
         return None
 
