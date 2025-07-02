@@ -23,6 +23,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
+
 # users/serializers.py
 from rest_framework import serializers
 from .models import FirebaseUser
@@ -31,4 +32,5 @@ class FirebaseUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = FirebaseUser
         fields = ['first_name', 'last_name', 'email', 'phone', 'address', 'avatar']
+
 
