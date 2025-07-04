@@ -20,6 +20,6 @@ urlpatterns = [
     path('api/products/enhanced-search/', EnhancedProductSearch.as_view(), name='enhanced-product-search'),
     path('api/search/suggestions/', views.get_search_suggestions, name='search-suggestions'),
     path('api/categories/<int:category_id>/products/', CategoryProductsAPIView.as_view(), name='category-products'),
-    path('api/categories/<int:category_id>/filter-options/', views.get_filter_options, name='category-filter-options'),
+    
     
 ]
