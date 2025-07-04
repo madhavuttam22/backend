@@ -4,11 +4,10 @@ from rest_framework import status
 from django.http import JsonResponse
 from django.db.models import Q, F, Value, CharField
 from django.db.models.functions import Concat, Greatest, Coalesce
-from .models import *
+from .models import Products, Category
 from .serializers import ProductSerializer, CategorySerializer
 from fuzzywuzzy import fuzz
 import re
-
 
 def product_search(request):
     query = request.GET.get('q', '').strip()
@@ -186,94 +185,3 @@ class CategoryProductsAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-
-
-# @api_view(['GET'])
-# def get_filter_options(request, category_id=None):
-#     try:
-#         # Get base queryset
-#         if category_id:
-#             products = Products.objects.filter(category_id=category_id)
-#         else:
-#             products = Products.objects.all()
-        
-#         # Calculate price range
-#         price_range = products.aggregate(
-#             min_price=Min('currentprice'),
-#             max_price=Max('currentprice')
-#         )
-        
-#         # Get all available colors
-#         colors = Color.objects.filter(
-#             productcolor__product__in=products,
-#             productcolor__is_active=True
-#         ).distinct().values('id', 'name', 'hex_code')
-        
-#         # Get all available sizes
-#         sizes = Size.objects.filter(
-#             productsize__product__in=products,
-#             productsize__is_active=True,
-#             productsize__stock__gt=0
-#         ).distinct().values('id', 'name')
-        
-#         return Response({
-#             'price_range': {
-#                 'min': price_range['min_price'] or 0,
-#                 'max': price_range['max_price'] or 10000
-#             },
-#             'colors': colors,
-#             'sizes': sizes
-#         })
-        
-#     except Exception as e:
-#         return Response(
-#             {"error": str(e)},
-#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#         )
-
-
-# class CategoryProductsAPIView(APIView):
-#     def get(self, request, category_id):
-#         try:
-#             # Get filter params from request
-#             min_price = request.query_params.get('min_price')
-#             max_price = request.query_params.get('max_price')
-#             colors = request.query_params.getlist('colors[]')
-#             sizes = request.query_params.getlist('sizes[]')
-#             availability = request.query_params.get('availability')
-            
-#             # Base queryset
-#             products = Products.objects.filter(category_id=category_id)
-            
-#             # Apply filters
-#             if min_price and max_price:
-#                 products = products.filter(
-#                     currentprice__gte=min_price,
-#                     currentprice__lte=max_price
-#                 )
-            
-#             if colors:
-#                 products = products.filter(
-#                     colors__color_id__in=colors,
-#                     colors__is_active=True
-#                 ).distinct()
-            
-#             if sizes:
-#                 products = products.filter(
-#                     sizes__size_id__in=sizes,
-#                     sizes__is_active=True
-#                 ).distinct()
-            
-#             if availability == 'in_stock':
-#                 products = products.filter(
-#                     sizes__stock__gt=0
-#                 ).distinct()
-            
-#             serializer = ProductSerializer(products, many=True)
-#             return Response(serializer.data)
-            
-#         except Category.DoesNotExist:
-#             return Response(
-#                 {"error": "Category not found"},
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
