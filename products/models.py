@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.text import slugify
-
+from cloudinary_storage.storage import MediaCloudinaryStorage
 class Size(models.Model):
     name = models.CharField(max_length=50)
     is_active = models.BooleanField(default=True)
@@ -48,18 +48,18 @@ class ProductColor(models.Model):
     product = models.ForeignKey(Products, on_delete=models.CASCADE, related_name='colors')
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
-    order = models.PositiveIntegerField(default=0)  # नया फील्ड जोड़ें
+    order = models.PositiveIntegerField(default=0)  
     
     class Meta:
         unique_together = ('product', 'color')
-        ordering = ['order']  # ऑर्डर के अनुसार सॉर्टिंग
+        ordering = ['order'] 
     
     def __str__(self):
         return f"{self.product.name} - {self.color.name}"
 
 class ProductColorImage(models.Model):
     product_color = models.ForeignKey(ProductColor, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='product_color_images/')
+    image = models.ImageField(upload_to='product_color_images/', storage=MediaCloudinaryStorage())
     is_default = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)  # for ordering images
     
