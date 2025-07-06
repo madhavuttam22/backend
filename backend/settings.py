@@ -31,8 +31,18 @@ INSTALLED_APPS = [
     'corsheaders',  # for handling CORS
     'products',
     'cart',
-    'users'
+    'users',
+    'cloudinary',
+    'cloudinary_storage',
 ]
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'root',
+    'API_KEY': '316334353757638',
+    'API_SECRET': 'N0DdalL8X4OZCjATbG83heh4ekE',
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MIDDLEWARE = [
     'backend.middleware.firebase_auth.FirebaseAuthenticationMiddleware',
