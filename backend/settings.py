@@ -37,7 +37,7 @@ INSTALLED_APPS = [
 ]
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'root',
+    'CLOUD_NAME': 'dafuavxn8',
     'API_KEY': '316334353757638',
     'API_SECRET': 'N0DdalL8X4OZCjATbG83heh4ekE',
 }
