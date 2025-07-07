@@ -11,3 +11,18 @@ class FirebaseUser(models.Model):
 
     def __str__(self):
         return self.email
+
+from django.db import models
+from django.utils import timezone
+
+class Contact(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    subject = models.CharField(max_length=200)
+    message = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    is_resolved = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.name} - {self.subject}"

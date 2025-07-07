@@ -37,3 +37,14 @@ class FirebaseUserSerializer(serializers.ModelSerializer):
 
     def get_name(self, obj):
         return f"{obj.first_name or ''} {obj.last_name or ''}".strip()
+
+
+from rest_framework import serializers
+from .models import Contact
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = ['id', 'name', 'email', 'phone', 'subject', 'message', 'created_at']
+
+        

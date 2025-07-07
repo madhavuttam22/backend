@@ -108,3 +108,78 @@ class FirebaseProfileMeView(APIView):
 
         serializer = FirebaseUserSerializer(user)
         return Response(serializer.data)
+    
+
+
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import Contact
+from .serializers import ContactSerializer
+
+class ContactCreateView(generics.CreateAPIView):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        contact = serializer.save()
+        
+        # Send email to admin
+        subject = f"New Contact Form Submission: {contact.subject}"
+        message = f"""
+        You have received a new contact form submission:
+        
+        Name: {contact.name}
+        Email: {contact.email}
+        Phone: {contact.phone or 'Not provided'}
+        Subject: {contact.subject}
+        Message: {contact.message}
+        
+        """
+        
+        html_message = f"""
+        <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background-color: #4CAF50; color: white; padding: 10px; text-align: center; }}
+                    .content {{ padding: 20px; border: 1px solid #ddd; }}
+                    .footer {{ margin-top: 20px; text-align: center; font-size: 0.8em; color: #777; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h2>New Contact Form Submission</h2>
+                    </div>
+                    <div class="content">
+                        <p><strong>Name:</strong> {contact.name}</p>
+                        <p><strong>Email:</strong> {contact.email}</p>
+                        <p><strong>Phone:</strong> {contact.phone or 'Not provided'}</p>
+                        <p><strong>Subject:</strong> {contact.subject}</p>
+                        <p><strong>Message:</strong></p>
+                        <p>{contact.message}</p>
+                    </div>
+                    <div class="footer">
+                        <p>This email was sent from your website's contact form.</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+        
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [settings.ADMIN_EMAIL],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
