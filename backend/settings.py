@@ -159,13 +159,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # Password Reset Settings
 FRONTEND_URL = 'http://localhost:5173'  # Your React app's URL
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Or your email provider
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'sandybanna1137@gmail.com'  # Your email
-EMAIL_HOST_PASSWORD = 'yseu jyrs kutw ysuj'  # Your email password or app password
-DEFAULT_FROM_EMAIL = 'sandybanna1137@gmail.com'  # Your email
-ADMIN_EMAIL = 'sandybanna1137@gmail.com'  # Where contact form emails will be sent
+EMAIL_HOST_USER = 'sandybanna1137@gmail.com'
+EMAIL_HOST_PASSWORD = 'yseu jyrs kutw ysuj'  # This should be an App Password
+DEFAULT_FROM_EMAIL = 'sandybanna1137@gmail.com'
+ADMIN_EMAIL = 'sandybanna1137@gmail.com'  # Same as from email for testing
 
 
 
