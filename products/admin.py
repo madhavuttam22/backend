@@ -18,7 +18,7 @@ class ProductColorInline(admin.TabularInline):
     model = ProductColor
     extra = 1
     inlines = [ProductColorImageInline]
-    fields = ['color', 'is_active', 'order']  # order फील्ड जोड़ें
+    fields = ['color', 'is_active', 'order']  
     show_change_link = True
 
 class ProductSizeInline(admin.TabularInline):

@@ -126,12 +126,13 @@ import dj_database_url
 
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default="postgresql://ecco_db_ftp2_user:4Y1qrkrMZo6qyha4wCiOonHrMApI5vki@dpg-d1io74euk2gs739np65g-a.oregon-postgres.render.com/ecco_db_ftp2",
+    'default': dj_database_url.parse(
+        "postgresql://neondb_owner:npg_6NCZlEQHn9AP@ep-plain-heart-a1mhav1m-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
         conn_max_age=600,
         ssl_require=True
     )
 }
+
 
 
 # Password validation
