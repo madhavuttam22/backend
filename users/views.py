@@ -183,3 +183,49 @@ class ContactCreateView(generics.CreateAPIView):
         )
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+class ContactCreateView(generics.CreateAPIView):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            contact = serializer.save()
+            
+            # Log before sending email
+            logger.info(f"Attempting to send email for contact ID: {contact.id}")
+            
+            send_mail(
+                f"New Contact: {contact.subject}",
+                f"""
+                Name: {contact.name}
+                Email: {contact.email}
+                Phone: {contact.phone or 'Not provided'}
+                Message: {contact.message}
+                """,
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.ADMIN_EMAIL],
+                fail_silently=False,
+            )
+            
+            logger.info(f"Email sent successfully for contact ID: {contact.id}")
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Failed to send email: {str(e)}", exc_info=True)
+            # Still return 201 since the contact was saved, but log the email failure
+            return Response(
+                {
+                    "detail": "Your message was received but we failed to send notification email",
+                    "internal_error": str(e)
+                },
+                status=status.HTTP_201_CREATED
+            )
