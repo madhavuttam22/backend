@@ -165,6 +165,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'sandybanna1137@gmail.com'  # Your email
 EMAIL_HOST_PASSWORD = 'yseu jyrs kutw ysuj'  # Your email password or app password
 DEFAULT_FROM_EMAIL = 'sandybanna1137@gmail.com'  # Your email
+ADMIN_EMAIL = 'sandybanna1137@gmail.com'  # Where contact form emails will be sent
 
 
 
