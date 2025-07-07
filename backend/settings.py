@@ -162,10 +162,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'sandybanna1137@gmail.com'
-EMAIL_HOST_PASSWORD = 'yseu jyrs kutw ysuj'  # This should be an App Password
-DEFAULT_FROM_EMAIL = 'sandybanna1137@gmail.com'
-ADMIN_EMAIL = 'sandybanna1137@gmail.com'  # Same as from email for testing
+EMAIL_HOST_USER = 'sandybanna1137@gmail.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'yseu jyrs kutw ysuj'  # Your App Password
+DEFAULT_FROM_EMAIL = 'sandybanna1137@gmail.com'  # Must match EMAIL_HOST_USER
+SERVER_EMAIL = 'sandybanna1137@gmail.com'  # For error notifications
+ADMIN_EMAIL = 'sandybanna1137@gmail.com'  # Where to send contact form emails
 
 
 

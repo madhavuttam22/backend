@@ -1,5 +1,13 @@
+# serializers.py
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from .models import FirebaseUser, Contact
+from django.conf import settings
+from django.core.mail import send_mail
+import logging
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 class UserProfileSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source='profile.phone', required=False)
@@ -24,10 +32,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
-# serializers.py
-from rest_framework import serializers
-from .models import FirebaseUser
-
 class FirebaseUserSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
 
@@ -39,12 +43,7 @@ class FirebaseUserSerializer(serializers.ModelSerializer):
         return f"{obj.first_name or ''} {obj.last_name or ''}".strip()
 
 
-from rest_framework import serializers
-from .models import Contact
-
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
         fields = ['id', 'name', 'email', 'phone', 'subject', 'message', 'created_at']
-
-        
