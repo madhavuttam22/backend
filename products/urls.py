@@ -14,7 +14,6 @@ urlpatterns = [
     path('api/products/search/', views.product_search, name='product-search'),
     path('api/products/enhanced-search/', EnhancedProductSearch.as_view(), name='enhanced-product-search'),
     path('api/search/suggestions/', views.get_search_suggestions, name='search-suggestions'),
-    path('api/products/new-collection/', NewCollectionAPIView.as_view(), name='new-collection'),
     path('api/categories/<int:category_id>/products/', CategoryProductsAPIView.as_view(), name='category-products'),
     
     

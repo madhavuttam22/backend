@@ -36,7 +36,7 @@ class Products(models.Model):
     description = models.TextField()
     is_top_product = models.BooleanField(default=False)
     is_best_seller = models.BooleanField(default=False)
-    is_top_product = models.BooleanField(default=False)  # This marks new collection items
+    is_new = models.BooleanField(default=False)
     sizes = models.ManyToManyField(Size, through='ProductSize')
     def save(self, *args, **kwargs):
         if not self.slug:
