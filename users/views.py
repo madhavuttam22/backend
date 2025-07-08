@@ -184,7 +184,13 @@ class ContactCreateView(generics.CreateAPIView):
         
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-
+# users/views.py
+from rest_framework import generics, status
+from rest_framework.response import Response
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import Contact
+from .serializers import ContactSerializer
 import logging
 
 logger = logging.getLogger(__name__)
@@ -192,40 +198,38 @@ logger = logging.getLogger(__name__)
 class ContactCreateView(generics.CreateAPIView):
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
-    
+    throttle_scope = 'contact_form'  # Rate limiting (add to settings.py)
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         try:
             contact = serializer.save()
-            
-            # Log before sending email
-            logger.info(f"Attempting to send email for contact ID: {contact.id}")
-            
-            send_mail(
-                f"New Contact: {contact.subject}",
-                f"""
-                Name: {contact.name}
-                Email: {contact.email}
-                Phone: {contact.phone or 'Not provided'}
-                Message: {contact.message}
-                """,
-                settings.DEFAULT_FROM_EMAIL,
-                [settings.ADMIN_EMAIL],
-                fail_silently=False,
-            )
-            
-            logger.info(f"Email sent successfully for contact ID: {contact.id}")
+            self.send_admin_email(contact)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-            
+        
         except Exception as e:
-            logger.error(f"Failed to send email: {str(e)}", exc_info=True)
-            # Still return 201 since the contact was saved, but log the email failure
+            logger.error(f"Contact form failed: {str(e)}", exc_info=True)
             return Response(
-                {
-                    "detail": "Your message was received but we failed to send notification email",
-                    "internal_error": str(e)
-                },
+                {"error": "Message saved but email failed. We'll contact you soon."},
                 status=status.HTTP_201_CREATED
             )
+
+    def send_admin_email(self, contact):
+        subject = f"New Contact: {contact.subject}"
+        message = f"""
+        Name: {contact.name}
+        Email: {contact.email}
+        Phone: {contact.phone or 'N/A'}
+        Message: {contact.message}
+        """
+        
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [settings.ADMIN_EMAIL],
+            fail_silently=False,
+        )
+        logger.info(f"Email sent for contact ID: {contact.id}")
