@@ -185,3 +185,42 @@ class CategoryProductsAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+class NewCollectionAPIView(APIView):
+    def get(self, request):
+        # Get new collection products (is_top_product=True)
+        queryset = Products.objects.filter(is_top_product=True)
+        
+        # Apply filters if any
+        size = request.query_params.get('size')
+        color = request.query_params.get('color')
+        sort = request.query_params.get('sort')
+        
+        if size:
+            queryset = queryset.filter(sizes__size__id=size)
+        if color:
+            queryset = queryset.filter(colors__color__id=color)
+        
+        # Apply sorting
+        if sort == 'price_low':
+            queryset = queryset.order_by('currentprice')
+        elif sort == 'price_high':
+            queryset = queryset.order_by('-currentprice')
+        
+        serializer = ProductSerializer(
+            queryset.distinct(), 
+            many=True, 
+            context={'request': request}
+        )
+        return Response(serializer.data)
+    
+
+from rest_framework.pagination import PageNumberPagination
+
+class NewCollectionAPIView(APIView):
+    def get(self, request):
+        queryset = Products.objects.filter(is_top_product=True)
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = ProductSerializer(result_page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
