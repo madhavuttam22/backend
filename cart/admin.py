@@ -23,9 +23,11 @@ from .models import Order, OrderItem
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ['product', 'size', 'color', 'quantity', 'price', 'total_display']  # ✅ moved here
-    fields = ['product', 'size', 'color', 'quantity', 'price', 'total_display']
     can_delete = False
+
+    readonly_fields = ['product', 'size', 'color', 'quantity', 'price', 'total_display']  # ✅ total_display must be here only
+
+    fields = ['product', 'size', 'color', 'quantity', 'price', 'total_display']  # ✅ Now it's safe to use here
 
     def total_display(self, obj):
         return f"₹{obj.price * obj.quantity:.2f}"
