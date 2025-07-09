@@ -212,3 +212,154 @@ def remove_cart_item(request, product_id):
 def my_secure_view(request):
     firebase_user = request.firebase_user
     return JsonResponse({"message": "Hello, Firebase User!", "uid": firebase_user["uid"]})
+
+
+import json
+import random
+import string
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.csrf import csrf_exempt
+from django.middleware.csrf import get_token
+from firebase.firebase_auth import firebase_login_required
+from .models import Cart, CartItem, Order, OrderItem
+from products.models import Products, Size, Color
+
+# Helper function to generate order number
+def generate_order_number():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+
+@csrf_exempt
+@firebase_login_required
+@require_POST
+def create_order(request):
+    try:
+        data = json.loads(request.body)
+        cart = get_or_create_cart(request)
+        firebase_uid = request.firebase_user.get('uid')
+        
+        # Create order
+        order = Order.objects.create(
+            order_number=generate_order_number(),
+            firebase_uid=firebase_uid,
+            payment_method=data.get('paymentMethod', 'cod'),
+            
+            # Shipping info
+            first_name=data.get('firstName'),
+            last_name=data.get('lastName'),
+            email=data.get('email'),
+            phone=data.get('phone'),
+            address=data.get('address'),
+            city=data.get('city'),
+            state=data.get('state'),
+            zip_code=data.get('zipCode'),
+            country=data.get('country', 'India'),
+            
+            # Pricing
+            subtotal=float(data.get('subtotal', 0)),
+            shipping=float(data.get('shipping', 0)),
+            discount=float(data.get('discount', 0)),
+            total=float(data.get('total', 0)),
+        )
+        
+        # Create order items
+        if data.get('is_direct_purchase'):
+            # Direct purchase from product page
+            product = Products.objects.get(id=data['product_id'])
+            size = Size.objects.get(id=data['size_id'])
+            color = Color.objects.get(id=data['color_id']) if data.get('color_id') else None
+            
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                size=size,
+                color=color,
+                quantity=data['quantity'],
+                price=product.currentprice
+            )
+        else:
+            # Regular cart checkout
+            for item in cart.items.all():
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    size=item.size,
+                    color=item.color,
+                    quantity=item.quantity,
+                    price=item.price
+                )
+            # Clear cart after order creation
+            cart.items.all().delete()
+        
+        return JsonResponse({
+            'status': 'success',
+            'order_id': order.id,
+            'order_number': order.order_number,
+            'total': float(order.total)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@csrf_exempt
+@firebase_login_required
+@require_POST
+def create_direct_order(request):
+    try:
+        data = json.loads(request.body)
+        firebase_uid = request.firebase_user.get('uid')
+        
+        product = Products.objects.get(id=data['product_id'])
+        size = Size.objects.get(id=data['size_id'])
+        color = Color.objects.get(id=data['color_id']) if data.get('color_id') else None
+        
+        # Create order
+        order = Order.objects.create(
+            order_number=generate_order_number(),
+            firebase_uid=firebase_uid,
+            payment_method=data.get('paymentMethod', 'cod'),
+            is_direct_purchase=True,
+            
+            # Shipping info can be added later in checkout
+            total=product.currentprice * int(data.get('quantity', 1))
+        )
+        
+        # Create order item
+        OrderItem.objects.create(
+            order=order,
+            product=product,
+            size=size,
+            color=color,
+            quantity=data['quantity'],
+            price=product.currentprice
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'order_id': order.id,
+            'order_number': order.order_number
+        })
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@csrf_exempt
+@firebase_login_required
+@require_POST
+def verify_payment(request):
+    try:
+        data = json.loads(request.body)
+        order = Order.objects.get(id=data['order_id'])
+        
+        # Verify payment with Razorpay
+        # This is a simplified version - you should implement proper verification
+        order.payment_status = 'completed'
+        order.razorpay_payment_id = data.get('payment_id')
+        order.razorpay_order_id = data.get('order_id')
+        order.razorpay_signature = data.get('signature')
+        order.save()
+        
+        return JsonResponse({'status': 'success'})
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
