@@ -308,40 +308,61 @@ def create_direct_order(request):
     try:
         data = json.loads(request.body)
         firebase_uid = request.firebase_user.get('uid')
-        
+
         product = Products.objects.get(id=data['product_id'])
         size = Size.objects.get(id=data['size_id'])
         color = Color.objects.get(id=data['color_id']) if data.get('color_id') else None
-        
-        # Create order
+        quantity = int(data.get('quantity', 1))
+
+        unit_price = product.currentprice
+        subtotal = unit_price * quantity
+        shipping = 50  # Default shipping
+        discount = 0
+        tax = 0
+        total = subtotal + shipping + tax - discount
+
         order = Order.objects.create(
             order_number=generate_order_number(),
             firebase_uid=firebase_uid,
             payment_method=data.get('paymentMethod', 'cod'),
             is_direct_purchase=True,
-            
-            # Shipping info can be added later in checkout
-            total=product.currentprice * int(data.get('quantity', 1))
+
+            # Required pricing fields
+            subtotal=subtotal,
+            shipping=shipping,
+            discount=discount,
+            tax=tax,
+            total=total,
+
+            # Required shipping fields – set empty for now if not collected
+            first_name="",
+            last_name="",
+            email="",
+            phone="",
+            address="",
+            city="",
+            state="",
+            zip_code="",
         )
-        
-        # Create order item
+
         OrderItem.objects.create(
             order=order,
             product=product,
             size=size,
             color=color,
-            quantity=data['quantity'],
-            price=product.currentprice
+            quantity=quantity,
+            price=unit_price
         )
-        
+
         return JsonResponse({
             'status': 'success',
             'order_id': order.id,
             'order_number': order.order_number
         })
-        
+
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
 
 @csrf_exempt
 @firebase_login_required
