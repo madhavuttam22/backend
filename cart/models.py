@@ -8,6 +8,9 @@ from django.conf import settings
 from products.models import Products, Size, Color
 from users.models import  FirebaseUser as User
 
+from django.db import models
+from products.models import Products, Size, Color
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -32,11 +35,12 @@ class Order(models.Model):
     ]
     
     order_number = models.CharField(max_length=20, unique=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    firebase_uid = models.CharField(max_length=128)  # For Firebase users
+    firebase_uid = models.CharField(max_length=128)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    
+    # Razorpay fields
     razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
     razorpay_signature = models.CharField(max_length=100, blank=True, null=True)
@@ -51,19 +55,23 @@ class Order(models.Model):
     state = models.CharField(max_length=100)
     zip_code = models.CharField(max_length=20)
     country = models.CharField(max_length=100, default='India')
-    is_direct_purchase = models.BooleanField(default=False)
     
+    # Pricing
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    shipping = models.DecimalField(max_digits=10, decimal_places=2)
     tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    shipping = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2)
     
+    is_direct_purchase = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Order #{self.order_number}"
+
+    class Meta:
+        ordering = ['-created_at']
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
@@ -74,8 +82,8 @@ class OrderItem(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     
     def __str__(self):
-        return f"{self.quantity} x {self.product.name}"
-
+        return f"{self.quantity} x {self.product.name if self.product else 'Deleted Product'}"
+    
     @property
     def total(self):
         return self.price * self.quantity

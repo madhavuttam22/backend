@@ -221,10 +221,13 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
-from firebase.firebase_auth import firebase_login_required
+import json
 from .models import Cart, CartItem, Order, OrderItem
 from products.models import Products, Size, Color
+from firebase.firebase_auth import firebase_login_required
+import logging
 
+logger = logging.getLogger(__name__)
 # Helper function to generate order number
 def generate_order_number():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
@@ -238,34 +241,57 @@ def create_order(request):
         cart = get_or_create_cart(request)
         firebase_uid = request.firebase_user.get('uid')
         
+        # Validate required fields
+        required_fields = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'state', 'zipCode']
+        for field in required_fields:
+            if not data.get(field):
+                return JsonResponse({'status': 'error', 'message': f'{field} is required'}, status=400)
+
+        # Calculate pricing
+        if data.get('is_direct_purchase'):
+            product = Products.objects.get(id=data['product_id'])
+            quantity = int(data.get('quantity', 1))
+            subtotal = float(product.currentprice) * quantity
+        else:
+            subtotal = float(cart.total)
+        
+        shipping = float(data.get('shipping', 50))  # Default shipping
+        discount = float(data.get('discount', 0))
+        tax = float(data.get('tax', 0))
+        total = subtotal + shipping + tax - discount
+
+        if total <= 0:
+            return JsonResponse({'status': 'error', 'message': 'Invalid order total'}, status=400)
+
         # Create order
         order = Order.objects.create(
             order_number=generate_order_number(),
             firebase_uid=firebase_uid,
             payment_method=data.get('paymentMethod', 'cod'),
+            payment_status='pending',
             
             # Shipping info
-            first_name=data.get('firstName'),
-            last_name=data.get('lastName'),
-            email=data.get('email'),
-            phone=data.get('phone'),
-            address=data.get('address'),
-            city=data.get('city'),
-            state=data.get('state'),
-            zip_code=data.get('zipCode'),
+            first_name=data['firstName'],
+            last_name=data['lastName'],
+            email=data['email'],
+            phone=data['phone'],
+            address=data['address'],
+            city=data['city'],
+            state=data['state'],
+            zip_code=data['zipCode'],
             country=data.get('country', 'India'),
             
             # Pricing
-            subtotal=float(data.get('subtotal', 0)),
-            shipping=float(data.get('shipping', 0)),
-            discount=float(data.get('discount', 0)),
-            total=float(data.get('total', 0)),
+            subtotal=subtotal,
+            shipping=shipping,
+            tax=tax,
+            discount=discount,
+            total=total,
+            is_direct_purchase=data.get('is_direct_purchase', False)
         )
-        
+
         # Create order items
         if data.get('is_direct_purchase'):
-            # Direct purchase from product page
-            product = Products.objects.get(id=data['product_id'])
             size = Size.objects.get(id=data['size_id'])
             color = Color.objects.get(id=data['color_id']) if data.get('color_id') else None
             
@@ -274,11 +300,10 @@ def create_order(request):
                 product=product,
                 size=size,
                 color=color,
-                quantity=data['quantity'],
+                quantity=quantity,
                 price=product.currentprice
             )
         else:
-            # Regular cart checkout
             for item in cart.items.all():
                 OrderItem.objects.create(
                     order=order,
@@ -290,79 +315,24 @@ def create_order(request):
                 )
             # Clear cart after order creation
             cart.items.all().delete()
-        
+
         return JsonResponse({
             'status': 'success',
             'order_id': order.id,
             'order_number': order.order_number,
-            'total': float(order.total)
-        })
-        
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-
-@csrf_exempt
-@firebase_login_required
-@require_POST
-def create_direct_order(request):
-    try:
-        data = json.loads(request.body)
-        firebase_uid = request.firebase_user.get('uid')
-
-        product = Products.objects.get(id=data['product_id'])
-        size = Size.objects.get(id=data['size_id'])
-        color = Color.objects.get(id=data['color_id']) if data.get('color_id') else None
-        quantity = int(data.get('quantity', 1))
-
-        unit_price = product.currentprice
-        subtotal = unit_price * quantity
-        shipping = 50  # Default shipping
-        discount = 0
-        tax = 0
-        total = subtotal + shipping + tax - discount
-
-        order = Order.objects.create(
-            order_number=generate_order_number(),
-            firebase_uid=firebase_uid,
-            payment_method=data.get('paymentMethod', 'cod'),
-            is_direct_purchase=True,
-
-            # Required pricing fields
-            subtotal=subtotal,
-            shipping=shipping,
-            discount=discount,
-            tax=tax,
-            total=total,
-
-            # Required shipping fields – set empty for now if not collected
-            first_name="",
-            last_name="",
-            email="",
-            phone="",
-            address="",
-            city="",
-            state="",
-            zip_code="",
-        )
-
-        OrderItem.objects.create(
-            order=order,
-            product=product,
-            size=size,
-            color=color,
-            quantity=quantity,
-            price=unit_price
-        )
-
-        return JsonResponse({
-            'status': 'success',
-            'order_id': order.id,
-            'order_number': order.order_number
+            'total': float(order.total),
+            'payment_status': order.payment_status
         })
 
+    except Products.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
+    except Size.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Size not found'}, status=404)
+    except Color.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Color not found'}, status=404)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-
+        logger.error(f"Order creation error: {str(e)}", exc_info=True)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 @csrf_exempt
 @firebase_login_required
@@ -372,15 +342,21 @@ def verify_payment(request):
         data = json.loads(request.body)
         order = Order.objects.get(id=data['order_id'])
         
-        # Verify payment with Razorpay
-        # This is a simplified version - you should implement proper verification
+        # Update payment status
         order.payment_status = 'completed'
         order.razorpay_payment_id = data.get('payment_id')
-        order.razorpay_order_id = data.get('order_id')
+        order.razorpay_order_id = data.get('razorpay_order_id')
         order.razorpay_signature = data.get('signature')
         order.save()
         
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'order_id': order.id,
+            'payment_status': order.payment_status
+        })
         
+    except Order.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        logger.error(f"Payment verification error: {str(e)}", exc_info=True)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
