@@ -18,3 +18,12 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = '__all__'
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Ensure all numeric fields are numbers, not strings
+        numeric_fields = ['total', 'subtotal', 'shipping', 'tax', 'discount']
+        for field in numeric_fields:
+            if field in data and data[field] is not None:
+                data[field] = float(data[field])
+        return data
