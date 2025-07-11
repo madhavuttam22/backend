@@ -362,6 +362,7 @@ def verify_payment(request):
         logger.error(f"Payment verification error: {str(e)}", exc_info=True)
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     
+# views.py
 @csrf_exempt
 @firebase_login_required
 @require_GET
@@ -369,13 +370,12 @@ def get_user_orders(request):
     try:
         firebase_uid = request.firebase_user.get('uid')
         orders = Order.objects.filter(firebase_uid=firebase_uid).order_by('-created_at')
-        serializer = OrderSerializer(orders, many=True)
+        serializer = OrderSerializer(orders, many=True, context={'request': request})
         
         return JsonResponse({
             'status': 'success',
-            'orders': serializer.data  # This ensures proper array format
+            'orders': serializer.data
         })
-        
     except Exception as e:
         return JsonResponse({
             'status': 'error',
