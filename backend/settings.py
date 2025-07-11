@@ -65,7 +65,7 @@ CSRF_COOKIE_HTTPONLY = False  # Required for JavaScript to access CSRF token
 SESSION_COOKIE_HTTPONLY = True
 CORS_ALLOWED_ORIGINS = [
     # "http://localhost:3000",
-    'https://ecco-font.onrender.com',
+    'https://ecco-font.vercel.app',
     # "http://localhost:5173",  # React's default port
     # "http://127.0.0.1:5173",
     "https://web-production-2449.up.railway.app"
@@ -73,7 +73,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
-    'https://ecco-font.onrender.com',
+    'https://ecco-font.vercel.app',
     'https://web-production-2449.up.railway.app',
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -200,7 +200,13 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # }
 # DEBUG = False
 
-ALLOWED_HOSTS = ["web-production-2449.up.railway.app", "*"]
+ALLOWED_HOSTS = [
+    "web-production-2449.up.railway.app",
+    "ecco-font.vercel.app",
+    "localhost",
+    "127.0.0.1"
+]
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
