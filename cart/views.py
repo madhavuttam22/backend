@@ -360,3 +360,34 @@ def verify_payment(request):
     except Exception as e:
         logger.error(f"Payment verification error: {str(e)}", exc_info=True)
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .serializers import OrderSerializer
+from firebase.firebase_auth import firebase_login_required
+
+@csrf_exempt
+@firebase_login_required
+@require_GET
+def get_user_orders(request):
+    try:
+        firebase_uid = request.firebase_user.get('uid')
+        orders = Order.objects.filter(firebase_uid=firebase_uid).order_by('-created_at')
+        
+        # Serialize orders with items
+        serialized_orders = []
+        for order in orders:
+            order_data = OrderSerializer(order).data
+            serialized_orders.append(order_data)
+        
+        return JsonResponse({
+            'status': 'success',
+            'orders': serialized_orders
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)

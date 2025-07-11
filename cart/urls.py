@@ -10,4 +10,5 @@ urlpatterns = [
     path('api/orders/create/', views.create_order, name='create-order'),
     # path('api/orders/create-direct/', views.create_direct_order, name='create-direct-order'),
     path('api/payments/verify/', views.verify_payment, name='verify-payment'),
+    path('api/orders/', views.get_user_orders, name='user-orders'),
 ]
