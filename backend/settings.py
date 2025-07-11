@@ -200,7 +200,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # }
 # DEBUG = False
 
-ALLOWED_HOSTS = ["ecco-back-4j3f.onrender.com", "*"]
+ALLOWED_HOSTS = ["web-production-2449.up.railway.app", "*"]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
