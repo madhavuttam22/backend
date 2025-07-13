@@ -157,7 +157,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # AUTH_USER_MODEL = 'users.User'
 
 # Password Reset Settings
-FRONTEND_URL = 'http://localhost:5173'  # Your React app's URL
+FRONTEND_URL = 'https://ecco-font.vercel.app'  # Your React app's URL
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
