@@ -233,3 +233,88 @@ class ContactCreateView(generics.CreateAPIView):
             fail_silently=False,
         )
         logger.info(f"Email sent for contact ID: {contact.id}")
+
+
+# users/views.py
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+
+User = get_user_model()
+
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User with this email does not exist'}, 
+                           status=status.HTTP_400_BAD_REQUEST)
+        
+        # Generate password reset token
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        
+        # Build reset URL
+        reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+        
+        # Send email
+        subject = "Password Reset Request"
+        message = f"""
+        Hello {user.email},
+        
+        You're receiving this email because you requested a password reset for your account.
+        
+        Please go to the following page and choose a new password:
+        {reset_url}
+        
+        If you didn't request this, please ignore this email.
+        
+        Thanks,
+        Your Ecommerce Team
+        """
+        
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        
+        return Response({'message': 'Password reset email sent'}, 
+                       status=status.HTTP_200_OK)
+
+class PasswordResetConfirmView(APIView):
+    def post(self, request, uidb64, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+        
+        if user is not None and default_token_generator.check_token(user, token):
+            new_password = request.data.get('new_password')
+            
+            if not new_password or len(new_password) < 8:
+                return Response({'error': 'Password must be at least 8 characters'}, 
+                               status=status.HTTP_400_BAD_REQUEST)
+                
+            user.set_password(new_password)
+            user.save()
+            return Response({'message': 'Password has been reset successfully'}, 
+                           status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid reset link'}, 
+                           status=status.HTTP_400_BAD_REQUEST)
