@@ -64,7 +64,7 @@ class FirebaseRegisterView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -72,28 +72,43 @@ from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
 from firebase_admin import auth as firebase_auth
-from .models import FirebaseUser
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 import logging
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
 class PasswordResetRequestView(APIView):
-    """Handles password reset requests"""
+    """Handles password reset requests with rate limiting"""
+    
+    @method_decorator(ratelimit(key='ip', rate='5/h', method='POST'))
     def post(self, request):
-        email = request.data.get('email')
+        was_limited = getattr(request, 'limited', False)
+        if was_limited:
+            return Response(
+                {'error': 'Too many requests. Please try again later.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+            
+        email = request.data.get('email', '').strip().lower()
         
         if not email:
-            return Response({'error': 'Email is required'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': 'Email is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         try:
             # Check if user exists in Firebase
             try:
                 firebase_user = firebase_auth.get_user_by_email(email)
             except firebase_auth.UserNotFoundError:
-                return Response({'error': 'No user found with this email'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                logger.warning(f"Password reset attempt for non-existent email: {email}")
+                return Response(
+                    {'error': 'If this email exists, a reset link has been sent'},
+                    status=status.HTTP_200_OK
+                )
             
             # Get or create Django user
             user, created = User.objects.get_or_create(
@@ -114,21 +129,29 @@ class PasswordResetRequestView(APIView):
             # Send email
             send_mail(
                 'Password Reset Request',
-                f'Use this link to reset your password: {reset_url}',
+                f'Use this link to reset your password: {reset_url}\n\n'
+                f'This link will expire in 24 hours.',
                 settings.DEFAULT_FROM_EMAIL,
                 [email],
                 fail_silently=False,
             )
             
-            return Response({'message': 'Password reset email sent'}, 
-                          status=status.HTTP_200_OK)
+            logger.info(f"Password reset email sent to {email}")
+            return Response(
+                {'message': 'If this email exists, a reset link has been sent'},
+                status=status.HTTP_200_OK
+            )
             
         except Exception as e:
-            logger.error(f"Password reset error: {str(e)}")
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f"Password reset error for {email}: {str(e)}")
+            return Response(
+                {'error': 'An error occurred. Please try again later.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class PasswordResetConfirmView(APIView):
-    """Handles password reset confirmation"""
+    """Handles password reset confirmation with validation"""
+    
     def post(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
@@ -137,13 +160,46 @@ class PasswordResetConfirmView(APIView):
             user = None
         
         if user is None or not default_token_generator.check_token(user, token):
-            return Response({'error': 'Invalid reset link'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
+            logger.warning(f"Invalid password reset link used: uidb64={uidb64}")
+            return Response(
+                {'error': 'Invalid or expired reset link. Please request a new one.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        new_password = request.data.get('new_password')
+        new_password = request.data.get('new_password', '')
+        confirm_password = request.data.get('confirm_password', '')
+        
+        # Validation
         if not new_password or len(new_password) < 8:
-            return Response({'error': 'Password must be at least 8 characters'},
-                          status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': 'Password must be at least 8 characters'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        if new_password != confirm_password:
+            return Response(
+                {'error': 'Passwords do not match'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Optional: Add more password strength checks
+        if not any(c.isupper() for c in new_password):
+            return Response(
+                {'error': 'Password must contain at least one uppercase letter'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        if not any(c.islower() for c in new_password):
+            return Response(
+                {'error': 'Password must contain at least one lowercase letter'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        if not any(c.isdigit() for c in new_password):
+            return Response(
+                {'error': 'Password must contain at least one number'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         try:
             # Update password in Firebase
@@ -154,13 +210,18 @@ class PasswordResetConfirmView(APIView):
             user.set_password(new_password)
             user.save()
             
-            return Response({'message': 'Password has been reset successfully'},
-                          status=status.HTTP_200_OK)
+            logger.info(f"Password successfully reset for user: {user.email}")
+            return Response(
+                {'message': 'Password has been reset successfully'},
+                status=status.HTTP_200_OK
+            )
             
         except Exception as e:
-            logger.error(f"Password update error: {str(e)}")
-            return Response({'error': 'Failed to update password'},
-                          status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f"Password reset failed for {user.email}: {str(e)}")
+            return Response(
+                {'error': 'Failed to update password. Please try again.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class FirebaseProfileUpdateView(APIView):
     parser_classes = [MultiPartParser, FormParser]
