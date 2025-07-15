@@ -62,9 +62,24 @@ class FirebaseRegisterView(APIView):
         except Exception as e:
             logger.error(f"Registration error: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.conf import settings
+from firebase_admin import auth as firebase_auth
+from .models import FirebaseUser
+import logging
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
 
 class PasswordResetRequestView(APIView):
-    """Handles password reset requests for Firebase users"""
+    """Handles password reset requests"""
     def post(self, request):
         email = request.data.get('email')
         
@@ -73,14 +88,14 @@ class PasswordResetRequestView(APIView):
                           status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Check Firebase first
+            # Check if user exists in Firebase
             try:
                 firebase_user = firebase_auth.get_user_by_email(email)
             except firebase_auth.UserNotFoundError:
-                return Response({'error': 'User with this email does not exist'},
+                return Response({'error': 'No user found with this email'},
                               status=status.HTTP_400_BAD_REQUEST)
             
-            # Then check/create Django user
+            # Get or create Django user
             user, created = User.objects.get_or_create(
                 email=email,
                 defaults={
@@ -89,7 +104,7 @@ class PasswordResetRequestView(APIView):
                 }
             )
             
-            # Generate password reset token
+            # Generate tokens
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             
@@ -97,21 +112,9 @@ class PasswordResetRequestView(APIView):
             reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
             
             # Send email
-            subject = "Password Reset Request"
-            message = f"""
-            Hello {email},
-            
-            You're receiving this email because you requested a password reset.
-            
-            Please go to the following page:
-            {reset_url}
-            
-            If you didn't request this, please ignore this email.
-            """
-            
             send_mail(
-                subject,
-                message,
+                'Password Reset Request',
+                f'Use this link to reset your password: {reset_url}',
                 settings.DEFAULT_FROM_EMAIL,
                 [email],
                 fail_silently=False,
@@ -133,31 +136,31 @@ class PasswordResetConfirmView(APIView):
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
         
-        if user is not None and default_token_generator.check_token(user, token):
-            new_password = request.data.get('new_password')
-            
-            if not new_password or len(new_password) < 8:
-                return Response({'error': 'Password must be at least 8 characters'}, 
-                               status=status.HTTP_400_BAD_REQUEST)
-                
-            # Update password in Firebase
-            try:
-                firebase_user = firebase_auth.get_user_by_email(user.email)
-                firebase_auth.update_user(firebase_user.uid, password=new_password)
-                
-                # Also update Django user (though password won't be used for auth)
-                user.set_password(new_password)
-                user.save()
-                
-                return Response({'message': 'Password has been reset successfully'}, 
-                               status=status.HTTP_200_OK)
-            except Exception as e:
-                logger.error(f"Firebase password update error: {str(e)}")
-                return Response({'error': 'Failed to update password'}, 
-                               status=status.HTTP_400_BAD_REQUEST)
-        else:
+        if user is None or not default_token_generator.check_token(user, token):
             return Response({'error': 'Invalid reset link'}, 
-                           status=status.HTTP_400_BAD_REQUEST)
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        new_password = request.data.get('new_password')
+        if not new_password or len(new_password) < 8:
+            return Response({'error': 'Password must be at least 8 characters'},
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Update password in Firebase
+            firebase_user = firebase_auth.get_user_by_email(user.email)
+            firebase_auth.update_user(firebase_user.uid, password=new_password)
+            
+            # Update Django user (for consistency)
+            user.set_password(new_password)
+            user.save()
+            
+            return Response({'message': 'Password has been reset successfully'},
+                          status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Password update error: {str(e)}")
+            return Response({'error': 'Failed to update password'},
+                          status=status.HTTP_400_BAD_REQUEST)
 
 class FirebaseProfileUpdateView(APIView):
     parser_classes = [MultiPartParser, FormParser]
