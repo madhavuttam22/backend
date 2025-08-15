@@ -67,15 +67,15 @@ CORS_ALLOWED_ORIGINS = [
     'https://ecco-font.vercel.app',
     # "http://localhost:5173",  # React's default port
     # "http://127.0.0.1:5173",
-    "https://web-production-2449.up.railway.app",
-    'https://web-production-21fd.up.railway.app',
+    # "https://web-production-2449.up.railway.app",
+    'https://web-production-27d40.up.railway.app',
     # 'https://ecommerce-backend-da9u.onrender.com'
 
 ]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     'https://ecco-font.vercel.app',
-    'https://web-production-21fd.up.railway.app',
+    'https://web-production-27d40.up.railway.app',
     # 'https://web-production-2449.up.railway.app',
     
     # 'https://ecommerce-backend-da9u.onrender.com',
@@ -206,7 +206,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ALLOWED_HOSTS = [
     # "web-production-2449.up.railway.app",
-    'web-production-21fd.up.railway.app',
+    'web-production-27d40.up.railway.app',
     # "ecommerce-backend-da9u.onrender.com",
     "ecco-font.vercel.app",
     "localhost",
