@@ -36,45 +36,35 @@
 #         return Response({'detail': str(e)}, status=400)
 
 # views.py
-from rest_framework.decorators import api_view
-@api_view(['POST'])
-def register_firebase_user(request):
-    token = request.headers.get("Authorization", "").split("Bearer ")[-1]
-    if not token:
-        return Response({"detail": "Authorization header missing"}, status=400)
+from rest_framework import generics, status
+from rest_framework.response import Response
+from .serializers import RegisterUserSerializer
+from rest_framework.permissions import AllowAny
+from .models import *
 
-    try:
-        decoded = firebase_auth.verify_id_token(token)
-        uid = decoded.get("uid")
-        email = decoded.get("email")
-        name = decoded.get("name", "")
-        phone = decoded.get("phone_number", "")
+class RegisterUserView(generics.CreateAPIView):
+    queryset = RegisterUser.objects.all()
+    serializer_class = RegisterUserSerializer
+    permission_classes = [AllowAny]
 
-        # Split name into first and last
-        name_parts = name.split(" ")
-        first_name = name_parts[0] if name else ""
-        last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
-
-        # Create or update user with ALL fields
-        user, created = FirebaseUser.objects.update_or_create(
-            uid=uid,
-            defaults={
-                "email": email,
-                "first_name": first_name,
-                "last_name": last_name,
-                "phone": phone,
-                "is_active": True
-            }
-        )
-
-        serializer = FirebaseUserSerializer(user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        # You can add email verification logic here
+        # send_verification_email(user)
+        
         return Response({
-            "user": serializer.data,
-            "created": created
-        }, status=201 if created else 200)
-
-    except Exception as e:
-        return Response({"detail": str(e)}, status=400)
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name
+            },
+            "message": "User registered successfully. Please check your email for verification."
+        }, status=status.HTTP_201_CREATED)
 
 
 # users/views.py

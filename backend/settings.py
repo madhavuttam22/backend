@@ -156,7 +156,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'users.RegisterUser'
 
 # Password Reset Settings
 FRONTEND_URL = 'https://ecco-font.vercel.app'  # Your React app's URL
