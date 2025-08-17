@@ -35,43 +35,46 @@
 #     except Exception as e:
 #         return Response({'detail': str(e)}, status=400)
 
+# views.py
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from .models import FirebaseUser
-
-@api_view(["POST"])
+@api_view(['POST'])
 def register_firebase_user(request):
+    token = request.headers.get("Authorization", "").split("Bearer ")[-1]
+    if not token:
+        return Response({"detail": "Authorization header missing"}, status=400)
+
     try:
-        uid = request.data.get("uid")
-        email = request.data.get("email")
+        decoded = firebase_auth.verify_id_token(token)
+        uid = decoded.get("uid")
+        email = decoded.get("email")
+        name = decoded.get("name", "")
+        phone = decoded.get("phone_number", "")
 
-        if not uid or not email:
-            return Response({"error": "UID and Email are required"}, status=status.HTTP_400_BAD_REQUEST)
+        # Split name into first and last
+        name_parts = name.split(" ")
+        first_name = name_parts[0] if name else ""
+        last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
 
-        # User ko get ya create karo
-        user, created = FirebaseUser.objects.get_or_create(
+        # Create or update user with ALL fields
+        user, created = FirebaseUser.objects.update_or_create(
             uid=uid,
-            defaults={"email": email}
+            defaults={
+                "email": email,
+                "first_name": first_name,
+                "last_name": last_name,
+                "phone": phone,
+                "is_active": True
+            }
         )
 
-        if not created:
-            # Agar user already hai, toh email update kar do (in case change ho jaye future me)
-            user.email = email
-            user.save()
-
-        return Response(
-            {
-                "message": "User created" if created else "User updated",
-                "uid": user.uid,
-                "email": user.email
-            },
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
-        )
+        serializer = FirebaseUserSerializer(user)
+        return Response({
+            "user": serializer.data,
+            "created": created
+        }, status=201 if created else 200)
 
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        return Response({"detail": str(e)}, status=400)
 
 
 # users/views.py
