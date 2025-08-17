@@ -18,15 +18,13 @@ from django.utils.html import format_html
 
 @admin.register(FirebaseUser)
 class FirebaseUserAdmin(admin.ModelAdmin):
-    list_display = ('email', 'full_name', 'uid_short', 'phone', 'is_active', 'date_joined')
-    list_filter = ('is_active', 'date_joined')
+    list_display = ('email', 'full_name', 'uid_short', 'phone')
     search_fields = ('email', 'first_name', 'last_name', 'uid', 'phone')
-    readonly_fields = ('uid', 'date_joined', 'last_login')
+    readonly_fields = ('uid')
     fieldsets = (
-        (None, {'fields': ('uid', 'email', 'is_active')}),
+        (None, {'fields': ('uid', 'email')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'phone', 'address')}),
-        ('Media', {'fields': ('avatar',)}),
-        ('Dates', {'fields': ('date_joined', 'last_login')}),
+        ('Media', {'fields': ('avatar',)})
     )
 
     def full_name(self, obj):
