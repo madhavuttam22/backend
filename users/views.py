@@ -35,6 +35,55 @@
 #     except Exception as e:
 #         return Response({'detail': str(e)}, status=400)
 
+# users/views.py
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from firebase_admin import auth as firebase_auth
+from .models import FirebaseUser
+from .serializers import FirebaseUserSerializer
+
+@api_view(['POST'])
+def register_firebase_user(request):
+    token = request.headers.get("Authorization", "").split("Bearer ")[-1]
+    if not token:
+        return Response({"detail": "Authorization header missing"}, status=400)
+
+    try:
+        decoded = firebase_auth.verify_id_token(token)
+        uid = decoded.get("uid")
+        email = decoded.get("email")
+        name = decoded.get("name", "")
+        phone = decoded.get("phone_number", "")
+
+        # ✅ Create or Get user on register
+        user, created = FirebaseUser.objects.get_or_create(
+            uid=uid,
+            defaults={
+                "email": email,
+                "first_name": name.split(" ")[0] if name else "",
+                "last_name": name.split(" ")[-1] if len(name.split()) > 1 else "",
+                "phone": phone
+            }
+        )
+
+        # agar user pehle se hai to email update bhi kar do
+        if not created:
+            user.email = email or user.email
+            user.first_name = name.split(" ")[0] if name else user.first_name
+            user.last_name = name.split(" ")[-1] if len(name.split()) > 1 else user.last_name
+            user.phone = phone or user.phone
+            user.save()
+
+        serializer = FirebaseUserSerializer(user)
+        return Response({
+            "user": serializer.data,
+            "created": created
+        }, status=200)
+
+    except Exception as e:
+        return Response({"detail": str(e)}, status=400)
+
+
 
 # users/views.py
 from rest_framework.views import APIView
