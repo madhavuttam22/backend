@@ -35,36 +35,6 @@
 #     except Exception as e:
 #         return Response({'detail': str(e)}, status=400)
 
-# views.py
-from rest_framework import generics, status
-from rest_framework.response import Response
-from .serializers import RegisterUserSerializer
-from rest_framework.permissions import AllowAny
-from .models import *
-
-class RegisterUserView(generics.CreateAPIView):
-    queryset = RegisterUser.objects.all()
-    serializer_class = RegisterUserSerializer
-    permission_classes = [AllowAny]
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        
-        # You can add email verification logic here
-        # send_verification_email(user)
-        
-        return Response({
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name
-            },
-            "message": "User registered successfully. Please check your email for verification."
-        }, status=status.HTTP_201_CREATED)
 
 
 # users/views.py

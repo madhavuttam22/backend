@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import FirebaseUser,Contact
 
+
 @admin.register(FirebaseUser)
 class FirebaseUserAdmin(admin.ModelAdmin):
     list_display = ('email', 'full_name', 'phone', 'uid')
