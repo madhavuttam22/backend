@@ -204,7 +204,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ALLOWED_HOSTS = [
     'web-production-27d40.up.railway.app',
-    'backend-u3he.onrender.com'
+    'backend-u3he.onrender.com',
     # "ecommerce-backend-da9u.onrender.com",
     "ecco-font.vercel.app",
     "localhost",
