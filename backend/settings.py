@@ -64,23 +64,23 @@ CSRF_COOKIE_HTTPONLY = False  # Required for JavaScript to access CSRF token
 SESSION_COOKIE_HTTPONLY = True
 CORS_ALLOWED_ORIGINS = [
     # "http://localhost:3000",
-    'https://ecco-font.vercel.app',
+    # 'https://ecco-font.vercel.app',
     'https://madhav-clothing.vercel.app',
     # "http://localhost:5173",  # React's default port
     # "http://127.0.0.1:5173",
-    'https://web-production-27d40.up.railway.app',
+    # 'https://web-production-27d40.up.railway.app',
     'https://backend-u3he.onrender.com',
     # 'https://ecommerce-backend-da9u.onrender.com'
 ]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
-    'https://ecco-font.vercel.app',
+    # 'https://ecco-font.vercel.app',
     'https://madhav-clothing.vercel.app',
-    'https://web-production-27d40.up.railway.app',
+    # 'https://web-production-27d40.up.railway.app',
     'https://backend-u3he.onrender.com',
     # 'https://ecommerce-backend-da9u.onrender.com',
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    # "http://localhost:5173",
+    # "http://127.0.0.1:5173",
 ]
 
 # Session will expire after 1 hour (3600 seconds)
@@ -205,10 +205,10 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # DEBUG = False
 
 ALLOWED_HOSTS = [
-    'web-production-27d40.up.railway.app',
+    # 'web-production-27d40.up.railway.app',
     'backend-u3he.onrender.com',
     # "ecommerce-backend-da9u.onrender.com",
-    "ecco-font.vercel.app",
+    # "ecco-font.vercel.app",
     'madhav-clothing.vercel.app',
     "localhost",
     "127.0.0.1"
