@@ -65,6 +65,7 @@ SESSION_COOKIE_HTTPONLY = True
 CORS_ALLOWED_ORIGINS = [
     # "http://localhost:3000",
     'https://ecco-font.vercel.app',
+    'https://madhav-clothing.vercel.app',
     # "http://localhost:5173",  # React's default port
     # "http://127.0.0.1:5173",
     'https://web-production-27d40.up.railway.app',
@@ -74,6 +75,7 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     'https://ecco-font.vercel.app',
+    'https://madhav-clothing.vercel.app',
     'https://web-production-27d40.up.railway.app',
     'https://backend-u3he.onrender.com',
     # 'https://ecommerce-backend-da9u.onrender.com',
@@ -159,7 +161,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # AUTH_USER_MODEL = 'users.User'
 
 # Password Reset Settings
-FRONTEND_URL = 'https://ecco-font.vercel.app'  # Your React app's URL
+FRONTEND_URL = 'https://madhav-clothing.vercel.app'  # Your React app's URL
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -207,6 +209,7 @@ ALLOWED_HOSTS = [
     'backend-u3he.onrender.com',
     # "ecommerce-backend-da9u.onrender.com",
     "ecco-font.vercel.app",
+    'madhav-clothing.vercel.app',
     "localhost",
     "127.0.0.1"
 ]
