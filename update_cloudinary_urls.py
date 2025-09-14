@@ -30,18 +30,20 @@ for res in resources:
 
 # Update database
 for image in ProductColorImage.objects.all():
-    # old URL
-    old_url = image.image.url  # ya image.image.name agar url nahi aa rahi
-    # Remove unwanted prefix
-    cleaned_url = old_url.replace(
-        "https://res.cloudinary.com/drrxzryrl/image/upload/v1/media/", ""
-    )
-    # Now lookup in our mapping
-    old_id = cleaned_url.split('/')[-1].split('.')[0]  # get base id like '2_ysyet3'
-    if old_id in lookup:
-        image.image = lookup[old_id]  # assign new Cloudinary URL
+    # old URL / old file name
+    old_filename = image.image.name.split('/')[-1].split('.')[0]  # "1_tu0uug"
+    if old_filename in lookup:
+        # get the public_id from Cloudinary URL
+        new_url = lookup[old_filename]  # e.g., "https://res.cloudinary.com/drrxzryrl/image/upload/v1757852817/1_tu0uug_u4rmld.webp"
+        # Extract relative path after /upload/
+        path_index = new_url.find('/upload/') + len('/upload/')
+        relative_path = new_url[path_index:]  # "v1757852817/1_tu0uug_u4rmld.webp"
+
+        # assign to ImageField
+        image.image.name = relative_path
         image.save()
-        print(f"Updated {image.id} -> {lookup[old_id]}")
+        print(f"Updated {image.id} -> {relative_path}")
+
 
 
 print("All images updated successfully!")
