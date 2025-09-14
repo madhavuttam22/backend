@@ -36,9 +36,9 @@ INSTALLED_APPS = [
 ]
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dafuavxn8',
-    'API_KEY': '316334353757638',
-    'API_SECRET': 'N0DdalL8X4OZCjATbG83heh4ekE',
+    'CLOUD_NAME': 'drrxzryrl',
+    'API_KEY': '298414175445982',
+    'API_SECRET': 'V-_ezwXd0kZQt9rIC8xuNbPXmP4',
 }
 
 
@@ -63,24 +63,12 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False  # Required for JavaScript to access CSRF token
 SESSION_COOKIE_HTTPONLY = True
 CORS_ALLOWED_ORIGINS = [
-    # "http://localhost:3000",
-    # 'https://ecco-font.vercel.app',
     'https://madhav-clothing.vercel.app',
-    # "http://localhost:5173",  # React's default port
-    # "http://127.0.0.1:5173",
-    # 'https://web-production-27d40.up.railway.app',
     'https://backend-u3he.onrender.com',
-    # 'https://ecommerce-backend-da9u.onrender.com'
 ]
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    # 'https://ecco-font.vercel.app',
     'https://madhav-clothing.vercel.app',
-    # 'https://web-production-27d40.up.railway.app',
     'https://backend-u3he.onrender.com',
-    # 'https://ecommerce-backend-da9u.onrender.com',
-    # "http://localhost:5173",
-    # "http://127.0.0.1:5173",
 ]
 
 # Session will expire after 1 hour (3600 seconds)
@@ -131,7 +119,7 @@ import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.parse(
-        "postgresql://neondb_owner:npg_6NCZlEQHn9AP@ep-plain-heart-a1mhav1m-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
+        'postgresql://neondb_owner:npg_Q2RtSJ5BhCMc@ep-plain-river-adoledzk-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
         conn_max_age=600,
         ssl_require=True
     )
@@ -166,11 +154,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'sandybanna1137@gmail.com'  # Your Gmail address
-EMAIL_HOST_PASSWORD = 'yseu jyrs kutw ysuj'  # Your App Password
-DEFAULT_FROM_EMAIL = 'sandybanna1137@gmail.com'  # Must match EMAIL_HOST_USER
-SERVER_EMAIL = 'sandybanna1137@gmail.com'  # For error notifications
-ADMIN_EMAIL = 'sandybanna1137@gmail.com'  # Where to send contact form emails
+EMAIL_HOST_USER = 'madhavuttam22@gmail.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'gdgz dhce cesc ychk'  # Your App Password
+DEFAULT_FROM_EMAIL = 'madhavuttam22@gmail.com'  # Must match EMAIL_HOST_USER
+SERVER_EMAIL = 'madhavuttam22@gmail.com'  # For error notifications
+ADMIN_EMAIL = 'madhavuttam22@gmail.com'  # Where to send contact form emails
 
 
 
@@ -205,10 +193,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # DEBUG = False
 
 ALLOWED_HOSTS = [
-    # 'web-production-27d40.up.railway.app',
     'backend-u3he.onrender.com',
-    # "ecommerce-backend-da9u.onrender.com",
-    # "ecco-font.vercel.app",
     'madhav-clothing.vercel.app',
     "localhost",
     "127.0.0.1"
@@ -218,7 +203,5 @@ ALLOWED_HOSTS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
