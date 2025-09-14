@@ -60,7 +60,7 @@ class ProductColor(models.Model):
 
 class ProductColorImage(models.Model):
     product_color = models.ForeignKey(ProductColor, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='product_color_images/', storage=MediaCloudinaryStorage())
+    image = models.ImageField(upload_to='product_color_images/', storage=MediaCloudinaryStorage(),max_length=255)
     is_default = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)  # for ordering images
     
